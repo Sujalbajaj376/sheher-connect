@@ -1,13 +1,17 @@
-import "./App.css";
+// App.jsx
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import HomeScreen from './src/screens/HomeScreen';
 
-function App() {
+const Stack = createStackNavigator();
+
+const App = () => {
   return (
-    <main className="flex justify-center gap-4 flex-col min-h-screen">
-      <h1 className="text-3xl text-center font-bold underline">React & Tailwind CSS Starter Pack</h1>
-      <p className="text-center text-xl">This is a starter pack for React & Tailwind CSS projects.</p>
-      <img src="https://bit.ly/3wsmzTy" alt="meme" className="mx-auto" />
-    </main>
+    <NavigationContainer>
+      
+    </NavigationContainer>
   );
-}
+};
 
 export default App;
