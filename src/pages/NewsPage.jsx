@@ -1,8 +1,7 @@
-// src/pages/Home.jsx
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { FaArrowRight, FaNewspaper, FaUsers, FaCity } from 'react-icons/fa';
+import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
 import { fetchCityNews } from '../utils/api';
 
 const NewsCard = ({ news }) => (
@@ -23,30 +22,35 @@ const NewsCard = ({ news }) => (
       <p className="text-gray-600 mb-4 line-clamp-3">{news.description}</p>
       <div className="flex justify-between items-center">
         <span className="text-sm text-gray-500">{new Date(news.publishedAt).toLocaleDateString()}</span>
-        <Link
-          to={news.url}
+        <a
+          href={news.url}
           target="_blank"
+          rel="noopener noreferrer"
           className="text-orange-500 hover:text-orange-600 font-medium flex items-center gap-2"
         >
           Read More
           <FaArrowRight />
-        </Link>
+        </a>
       </div>
     </div>
   </motion.div>
 );
 
-const HomePage = () => {
+const NewsPage = () => {
   const [news, setNews] = useState([]);
+  const [loading, setLoading] = useState(true);
   const city = 'Jaipur';
 
   useEffect(() => {
     const getNews = async () => {
       try {
+        setLoading(true);
         const articles = await fetchCityNews(city);
-        setNews(articles.slice(0, 3)); // Only show latest 3 news items
+        setNews(articles);
       } catch (error) {
         console.error('Error fetching news:', error);
+      } finally {
+        setLoading(false);
       }
     };
     getNews();
@@ -54,51 +58,45 @@ const HomePage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Section */}
-      <div className="relative h-[60vh] bg-gradient-to-r from-orange-500 to-pink-500">
-        <div className="absolute inset-0 bg-black/40" />
-        <div className="relative h-full max-w-7xl mx-auto px-4 flex items-center">
-          <div className="text-white">
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-5xl font-bold mb-4"
+      {/* Header */}
+      <div className="bg-gradient-to-r from-orange-500 to-pink-500 py-16">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex items-center gap-4 mb-4">
+            <Link
+              to="/"
+              className="text-white hover:text-gray-200 flex items-center gap-2"
             >
-              Welcome to {city}
-            </motion.h1>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="text-xl mb-8"
-            >
-              Stay updated with the latest news and developments in your city
-            </motion.p>
+              <FaArrowLeft />
+              Back to Home
+            </Link>
           </div>
+          <h1 className="text-4xl font-bold text-white mb-2">All News</h1>
+          <p className="text-white/90">Stay updated with the latest news from {city}</p>
         </div>
       </div>
 
-      {/* Latest News Section */}
+      {/* News Grid */}
       <div className="max-w-7xl mx-auto px-4 py-16">
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-3xl font-bold">Latest News</h2>
-          <Link
-            to="/news"
-            className="text-orange-500 hover:text-orange-600 font-medium flex items-center gap-2"
-          >
-            View All News
-            <FaArrowRight />
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {news.map((article, index) => (
-            <NewsCard key={index} news={article} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading news...</p>
+          </div>
+        ) : news.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {news.map((article, index) => (
+              <NewsCard key={index} news={article} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <h3 className="text-xl font-semibold text-gray-600">No news available</h3>
+            <p className="text-gray-500 mt-2">Please check back later for updates</p>
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
-export default HomePage;
+export default NewsPage; 
