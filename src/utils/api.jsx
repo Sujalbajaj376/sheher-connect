@@ -9,6 +9,7 @@ export const fetchCityNews = async (city) => {
       `${BASE_URL}/everything?q=${city}&apiKey=${API_KEY}`
     );
     const data = await response.json();
+    console.log(data.articles)
     return data.articles;
   } catch (error) {
     console.error('Error fetching news:', error);

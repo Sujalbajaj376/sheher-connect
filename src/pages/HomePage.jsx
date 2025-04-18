@@ -1,8 +1,8 @@
 // src/pages/Home.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { FaArrowRight, FaNewspaper, FaUsers, FaCity, FaMapMarkerAlt } from 'react-icons/fa';
+import { FaArrowRight, FaNewspaper, FaUsers, FaCity, FaMapMarkerAlt, FaSync } from 'react-icons/fa';
 import { fetchCityNews } from '../utils/api';
 
 const NewsCard = ({ news }) => (
@@ -41,7 +41,32 @@ const HomePage = () => {
   const [city, setCity] = useState('Loading...');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
 
+  const fetchNews = useCallback(async (cityName) => {
+    try {
+      setLoading(true);
+      setRefreshing(true);
+      // Add timestamp to prevent caching
+      const timestamp = new Date().getTime();
+      const articles = await fetchCityNews(cityName, timestamp);
+      setNews(articles.slice(0, 3));
+      setLastUpdated(new Date());
+    } catch (error) {
+      console.error('Error fetching news:', error);
+      setError('Unable to fetch news articles.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  const handleRefresh = useCallback(() => {
+    fetchNews(city);
+  }, [city, fetchNews]);
+
+  // Get user's location once when component mounts
   useEffect(() => {
     const getLocation = async () => {
       try {
@@ -55,44 +80,43 @@ const HomePage = () => {
               const data = await response.json();
               const cityName = data.address.city || data.address.town || data.address.village || 'Unknown Location';
               setCity(cityName);
-              const articles = await fetchCityNews(cityName);
-              setNews(articles.slice(0, 3));
-              setLoading(false);
             },
-            (error) => {
-              console.error('Error getting location:', error);
+            () => {
               setError('Unable to get your location. Using default city.');
               setCity('Jaipur');
-              fetchDefaultNews();
             }
           );
         } else {
-          setError('Geolocation is not supported by your browser.');
+          setError('Geolocation is not supported. Using default city.');
           setCity('Jaipur');
-          fetchDefaultNews();
         }
-      } catch (error) {
-        console.error('Error:', error);
-        setError('An error occurred while fetching location data.');
+      } catch (err) {
+        console.error('Location error:', err);
+        setError('Location fetch error. Using default city.');
         setCity('Jaipur');
-        fetchDefaultNews();
-      }
-    };
-
-    const fetchDefaultNews = async () => {
-      try {
-        const articles = await fetchCityNews('Jaipur');
-        setNews(articles.slice(0, 3));
-      } catch (error) {
-        console.error('Error fetching news:', error);
-        setError('Unable to fetch news articles.');
-      } finally {
-        setLoading(false);
       }
     };
 
     getLocation();
   }, []);
+
+  // Fetch news whenever city changes or component mounts
+  useEffect(() => {
+    if (city && city !== 'Loading...') {
+      fetchNews(city);
+    }
+  }, [city, fetchNews]);
+
+  // Add auto-refresh every 5 minutes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (city && city !== 'Loading...') {
+        fetchNews(city);
+      }
+    }, 5 * 60 * 1000); // 5 minutes
+
+    return () => clearInterval(interval);
+  }, [city, fetchNews]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -141,14 +165,31 @@ const HomePage = () => {
       {/* Latest News Section */}
       <div className="max-w-7xl mx-auto px-4 py-16">
         <div className="flex justify-between items-center mb-8">
-          <h2 className="text-3xl font-bold">Latest News</h2>
-          <Link
-            to="/news"
-            className="text-orange-500 hover:text-orange-600 font-medium flex items-center gap-2"
-          >
-            View All News
-            <FaArrowRight />
-          </Link>
+          <div>
+            <h2 className="text-3xl font-bold">Latest News</h2>
+            {lastUpdated && (
+              <p className="text-sm text-gray-500 mt-1">
+                Last updated: {lastUpdated.toLocaleTimeString()}
+              </p>
+            )}
+          </div>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="flex items-center gap-2 text-orange-500 hover:text-orange-600 font-medium disabled:opacity-50"
+            >
+              <FaSync className={`${refreshing ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
+            <Link
+              to="/news"
+              className="text-orange-500 hover:text-orange-600 font-medium flex items-center gap-2"
+            >
+              View All News
+              <FaArrowRight />
+            </Link>
+          </div>
         </div>
 
         {loading ? (
