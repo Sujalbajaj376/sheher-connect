@@ -61,7 +61,7 @@ const ProjectsPage = () => {
       title: "Community Sports Center",
       description: "A state-of-the-art sports facility designed to serve local athletes and promote community engagement.",
       category: "Infrastructure",
-      image: "/images/projects/sports-center.jpg",
+      image: "/infra2.jpg",
       team: 12,
       duration: "18 months",
       progress: 75
@@ -71,7 +71,7 @@ const ProjectsPage = () => {
       title: "Smart Traffic Management",
       description: "Implementation of AI-powered traffic management system to reduce congestion and improve safety.",
       category: "Technology",
-      image: "/images/projects/traffic.jpg",
+      image: "/tech2.jpg",
       team: 8,
       duration: "12 months",
       progress: 60
@@ -81,7 +81,7 @@ const ProjectsPage = () => {
       title: "Public Library Renovation",
       description: "Modernization of city's main public library with digital resources and learning spaces.",
       category: "Education",
-      image: "/images/projects/library.jpg",
+      image: "/education.jpeg",
       team: 6,
       duration: "8 months",
       progress: 90

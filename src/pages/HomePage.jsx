@@ -46,7 +46,7 @@ const HomePage = () => {
       title: "New Community Center Opening in Raja Park",
       description: "A state-of-the-art facility designed to serve the local community with modern amenities.",
       category: "Infrastructure",
-      image: "/images/community-center.jpg",
+      image: "/infra.jpg",
       date: "April 18, 2024"
     },
     {
@@ -54,7 +54,7 @@ const HomePage = () => {
       title: "Smart City Initiative Launches in Jaipur",
       description: "Implementation of smart technologies to enhance urban living and sustainability.",
       category: "Technology",
-      image: "/images/smart-city.jpg",
+      image: "/tech.webp",
       date: "April 17, 2024"
     },
     {
@@ -62,7 +62,7 @@ const HomePage = () => {
       title: "Heritage Conservation Project Begins",
       description: "Restoration work starts on historical monuments to preserve cultural heritage.",
       category: "Heritage",
-      image: "/images/heritage.jpg",
+      image: "/taj-mahal.jpg",
       date: "April 16, 2024"
     }
   ];

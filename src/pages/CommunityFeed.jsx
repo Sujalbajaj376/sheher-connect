@@ -102,6 +102,7 @@ const CommunityFeed = () => {
       likes: 234,
       comments: 45,
       time: "2 hours ago",
+      image: "/hawa.webp",
       tags: ["Heritage", "JaipurDiaries", "Tourism"]
     },
     {
@@ -116,6 +117,7 @@ const CommunityFeed = () => {
       likes: 156,
       comments: 28,
       time: "5 hours ago",
+      image:"metri.webp",
       tags: ["Infrastructure", "Development", "Transport"]
     }
   ];
