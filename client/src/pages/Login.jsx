@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from 'framer-motion';
-import { FaUser, FaLock, FaArrowLeft } from 'react-icons/fa';
+import { FaUser, FaLock, FaArrowLeft, FaUserShield } from 'react-icons/fa';
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { toast } from 'react-hot-toast';
@@ -12,10 +12,28 @@ const Login = () => {
     password: ""
   });
   const [loading, setLoading] = useState(false);
+  const [showAdminOption, setShowAdminOption] = useState(true);
   const navigate = useNavigate();
 
   // Check if user is already logged in
   useEffect(() => {
+    // Check if redirected from a user-only page like Report Issue
+    const userOnlyLogin = localStorage.getItem('userOnlyLogin');
+    if (userOnlyLogin === 'true') {
+      // Hide admin option
+      setShowAdminOption(false);
+      localStorage.removeItem('userOnlyLogin');
+    }
+    
+    // Check if redirected from Add Tender 
+    const redirectToAdmin = localStorage.getItem('loginAsAdmin');
+    if (redirectToAdmin === 'true') {
+      // Clear this flag and redirect to admin login
+      localStorage.removeItem('loginAsAdmin');
+      navigate('/admin/login');
+      return;
+    }
+    
     const token = localStorage.getItem('token');
     const user = localStorage.getItem('user');
     
@@ -43,21 +61,34 @@ const Login = () => {
     try {
       const response = await axios.post(`${base}/api/auth/login`, formData);
       
-      // Store user and token in localStorage
-      localStorage.setItem("user", JSON.stringify(response.data.user));
+      // Store token and user info
       localStorage.setItem("token", response.data.token);
+      
+      if (response.data.user) {
+        localStorage.setItem("user", JSON.stringify(response.data.user));
+      }
 
       // Set default authorization header for future requests
       axios.defaults.headers.common["Authorization"] = `Bearer ${response.data.token}`;
       
       toast.success('Login successful!');
-      navigate("/"); // Redirect to homepage
+      
+      // Redirect to home or original destination
+      const redirectUrl = localStorage.getItem('redirectUrl') || '/';
+      localStorage.removeItem('redirectUrl');
+      
+      navigate(redirectUrl);
     } catch (error) {
       console.error("Login failed:", error);
       toast.error(error.response?.data?.message || "Login failed. Please try again.");
     } finally {
       setLoading(false);
     }
+  };
+
+  const redirectToAdminLogin = () => {
+    // Redirect to admin login page
+    navigate('/admin/login');
   };
 
   return (
@@ -76,10 +107,29 @@ const Login = () => {
               </Link>
               <div>
                 <h1 className="text-2xl font-bold">Login</h1>
-                <p className="text-sm opacity-90">Access your SheherConnect account</p>
+                <p className="text-sm opacity-90">
+                  Access your SheherConnect account
+                </p>
               </div>
             </div>
           </div>
+
+          {/* Admin login redirect - only shown when not coming from user-only page */}
+          {showAdminOption && (
+            <div className="bg-gray-50 px-6 py-3 flex justify-between items-center border-b border-gray-200">
+              <span className="text-sm font-medium text-gray-600">
+                User Login
+              </span>
+              <button
+                type="button"
+                onClick={redirectToAdminLogin}
+                className="flex items-center gap-2 px-3 py-1.5 bg-orange-100 rounded-full text-sm font-medium text-orange-600 hover:bg-orange-200"
+              >
+                <FaUserShield size={16} />
+                Admin Login
+              </button>
+            </div>
+          )}
 
           {/* Form */}
           <div className="p-6">

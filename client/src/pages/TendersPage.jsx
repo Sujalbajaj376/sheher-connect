@@ -69,7 +69,7 @@ const mockTenders = [
 ];
 
 const TenderCard = ({ tender }) => (
-  <motion.div
+    <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
     whileHover={{ y: -5 }}
@@ -89,8 +89,8 @@ const TenderCard = ({ tender }) => (
               {tender.type}
             </span>
           </div>
-        </div>
-      </div>
+            </div>
+          </div>
       
       <p className="text-gray-600 mb-4 line-clamp-3">{tender.description}</p>
       
@@ -110,7 +110,7 @@ const TenderCard = ({ tender }) => (
         </a>
       </div>
     </div>
-  </motion.div>
+        </motion.div>
 );
 
 const AddTenderForm = ({ onClose, onSuccess }) => {
@@ -125,7 +125,7 @@ const AddTenderForm = ({ onClose, onSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('adminToken');
     
     if (!token) {
       toast.error('Please login as admin first');
@@ -158,7 +158,7 @@ const AddTenderForm = ({ onClose, onSuccess }) => {
     } catch (error) {
       if (error.response?.status === 401) {
         toast.error('Please login as admin first');
-        localStorage.removeItem('token');
+        localStorage.removeItem('adminToken');
         onClose();
       } else {
         toast.error('Failed to add tender. Please try again.');
@@ -169,7 +169,7 @@ const AddTenderForm = ({ onClose, onSuccess }) => {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4">
-      <motion.div
+          <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
@@ -184,10 +184,10 @@ const AddTenderForm = ({ onClose, onSuccess }) => {
             >
               <FaTimes size={24} />
             </button>
-          </div>
+                </div>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
+                <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
                 <input
                   type="text"
@@ -269,8 +269,8 @@ const AddTenderForm = ({ onClose, onSuccess }) => {
               </button>
             </div>
           </form>
-        </div>
-      </motion.div>
+            </div>
+          </motion.div>
     </div>
   );
 };
@@ -305,23 +305,28 @@ const TendersPage = () => {
   }, []);
 
   const handleAddTender = () => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      localStorage.setItem('redirectAfterLogin', '/tenders');
-      navigate('/admin/login');
-    } else {
-      axios.get('/api/auth/verify', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      .then(() => {
-        setShowAddForm(true);
-      })
-      .catch(() => {
-        localStorage.removeItem('token');
+    try {
+      console.log('Add Tender button clicked, redirecting to admin login');
+      
+      // Set redirect URL to return after login
+      localStorage.setItem('redirectUrl', '/tenders');
+      
+      // Redirect to admin login page
+      try {
         navigate('/admin/login');
-      });
+      } catch (navError) {
+        console.error('React Router navigation error:', navError);
+        // Fallback to direct window location change
+        window.location.href = '/admin/login';
+      }
+    } catch (error) {
+      console.error('Navigation error:', error);
+      toast.error('Failed to navigate to admin login. Please try again.');
+      
+      // Ultimate fallback
+      setTimeout(() => {
+        window.location.href = '/admin/login';
+      }, 1000);
     }
   };
 
@@ -338,7 +343,7 @@ const TendersPage = () => {
             </p>
           </div>
         </div>
-      </div>
+        </div>
 
       {/* White Section with Content */}
       <div className="bg-white">
@@ -357,7 +362,7 @@ const TendersPage = () => {
               <FaFileUpload />
               Add New Tender
             </motion.button>
-          </div>
+        </div>
 
           {loading ? (
             <div className="text-center py-12">

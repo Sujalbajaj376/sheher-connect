@@ -29,7 +29,10 @@ const Navbar = () => {
 
   const handleReportIssue = () => {
     if (!user) {
-      setShowAuthDropdown(true);
+      // Set a flag to indicate this is for user-only page, not admin
+      localStorage.setItem('userOnlyLogin', 'true');
+      // Store redirect URL for after login
+      localStorage.setItem('redirectUrl', '/report-issue');
       navigate('/login');
     } else {
       navigate('/report-issue');

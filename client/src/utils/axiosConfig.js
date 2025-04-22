@@ -6,9 +6,19 @@ axios.defaults.baseURL = 'http://localhost:6001';
 // Add request interceptor for handling auth tokens
 axios.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
+    // For admin API requests, check if the URL includes /admin/ and use adminToken
+    if (config.url.includes('/api/admin') || config.url.includes('/api/auth/admin')) {
+      const adminToken = localStorage.getItem('adminToken');
+      if (adminToken) {
+        config.headers['Authorization'] = `Bearer ${adminToken}`;
+        console.log('Using admin token for request to:', config.url);
+      }
+    } else {
+      // For regular API requests, use the regular token
+      const token = localStorage.getItem('token');
+      if (token) {
+        config.headers['Authorization'] = `Bearer ${token}`;
+      }
     }
     return config;
   },
@@ -24,15 +34,27 @@ axios.interceptors.response.use(
   },
   (error) => {
     if (error.response && error.response.status === 401) {
-      // Handle unauthorized access
-      localStorage.removeItem('token');
-      // Only redirect to login page if we're not already on a login page and not in an API call
-      // This prevents redirect loops and multiple login prompts
-      const currentPath = window.location.pathname;
-      if (!currentPath.includes('/login') && !currentPath.includes('/signup')) {
-        // Store the current path for redirect after login
-        localStorage.setItem('redirectAfterLogin', currentPath);
-        // Don't automatically redirect - let the component handle it
+      // Determine which token to remove based on the URL
+      if (error.config.url.includes('/api/admin') || error.config.url.includes('/api/auth/admin')) {
+        console.log('Admin token unauthorized, clearing token');
+        localStorage.removeItem('adminToken');
+        
+        // Only redirect to admin login if we're not already on admin login page
+        const currentPath = window.location.pathname;
+        if (!currentPath.includes('/admin/login')) {
+          localStorage.setItem('redirectUrl', currentPath);
+          window.location.href = '/admin/login';
+        }
+      } else {
+        // Handle unauthorized access for regular users
+        localStorage.removeItem('token');
+        // Only redirect to login page if we're not already on a login page and not in an API call
+        const currentPath = window.location.pathname;
+        if (!currentPath.includes('/login') && !currentPath.includes('/signup')) {
+          // Store the current path for redirect after login
+          localStorage.setItem('redirectUrl', currentPath);
+          // Don't automatically redirect - let the component handle it
+        }
       }
     }
     return Promise.reject(error);

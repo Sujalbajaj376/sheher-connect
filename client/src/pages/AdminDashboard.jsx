@@ -49,19 +49,51 @@ const AdminDashboard = () => {
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      const adminToken = localStorage.getItem('adminToken');
+      if (!adminToken) {
+        console.error('No admin token found, redirecting to login');
+        navigate('/admin/login');
+        return;
+      }
+      
+      try {
+        console.log('Checking admin status with token');
+        // Continue with fetch tenders
+        fetchTenders();
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        toast.error('Authentication error. Please login again.');
+        handleLogout();
+      }
+    };
+    
+    checkAdminStatus();
+  }, [navigate]);
+
   const fetchTenders = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get('/api/tenders', {
+      setLoading(true);
+      const adminToken = localStorage.getItem('adminToken');
+      console.log('Fetching tenders with admin token');
+      
+      // Use direct axios call to troubleshoot
+      const response = await axios({
+        method: 'get',
+        url: '/api/tenders',
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${adminToken}`
         }
       });
+      
+      console.log('Tenders fetched successfully:', response.data.length);
       setTenders(response.data);
       setFilteredTenders(response.data);
     } catch (error) {
-      console.error('Error fetching tenders:', error);
+      console.error('Error fetching tenders:', error.response?.data || error.message);
       if (error.response?.status === 401) {
+        toast.error('Session expired. Please login again.');
         handleLogout();
       } else {
         toast.error('Failed to load tenders');
@@ -70,10 +102,6 @@ const AdminDashboard = () => {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchTenders();
-  }, []);
 
   useEffect(() => {
     // Filter tenders based on search term and filter type
@@ -101,24 +129,35 @@ const AdminDashboard = () => {
   }, [searchTerm, filterType, tenders, activeTab]);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem('adminToken');
     toast.success('Logged out successfully');
     navigate('/admin/login');
   };
 
   const handleDeleteTender = async (tenderId) => {
     try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`/api/tenders/${tenderId}`, {
+      const adminToken = localStorage.getItem('adminToken');
+      console.log('Deleting tender with ID:', tenderId);
+      
+      // Use direct axios call to troubleshoot
+      await axios({
+        method: 'delete',
+        url: `/api/tenders/${tenderId}`,
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${adminToken}`
         }
       });
+      
       toast.success('Tender deleted successfully');
       fetchTenders();
     } catch (error) {
-      console.error('Error deleting tender:', error);
-      toast.error('Failed to delete tender');
+      console.error('Error deleting tender:', error.response?.data || error.message);
+      if (error.response?.status === 401) {
+        toast.error('Session expired. Please login again.');
+        handleLogout();
+      } else {
+        toast.error('Failed to delete tender');
+      }
     }
   };
 

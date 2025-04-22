@@ -118,3 +118,12 @@
 .hover-button:hover::after {
   @apply opacity-100;
 }
+
+/* Navigation links */
+.nav-link {
+  @apply text-gray-700 hover:text-orange-500 font-medium transition-colors py-2;
+}
+
+.nav-link.active {
+  @apply text-orange-500 font-semibold;
+}

@@ -4,6 +4,8 @@ import { FaUserShield, FaLock, FaArrowLeft } from 'react-icons/fa';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+
+// Define the API base URL
 const base = 'http://localhost:6001';
 
 const AdminLogin = () => {
@@ -12,49 +14,102 @@ const AdminLogin = () => {
     password: ''
   });
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
 
   // Check if user is already logged in
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    // Clear any error messages on component load
+    setErrorMessage('');
+    
+    // Check if admin is already logged in
+    const token = localStorage.getItem('adminToken');
     if (token) {
-      // Verify token
-      axios.get(`${base}/api/auth/verify`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
+      // Verify token validity
+      const verifyToken = async () => {
+        try {
+          console.log('Verifying admin token...');
+          
+          // Make direct axios call without interceptors to troubleshoot
+          const res = await axios({
+            method: 'get',
+            url: `${base}/api/auth/admin/verify`,
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+          
+          console.log('Admin token verification response:', res.data);
+          
+          if (res.data.valid) {
+            console.log('Admin token is valid, redirecting to:', localStorage.getItem('redirectUrl') || '/admin/dashboard');
+            const redirectUrl = localStorage.getItem('redirectUrl') || '/admin/dashboard';
+            navigate(redirectUrl);
+            localStorage.removeItem('redirectUrl');
+          } else {
+            console.warn('Token exists but is not valid');
+            localStorage.removeItem('adminToken');
+          }
+        } catch (error) {
+          console.error('Admin token verification failed:', error.response?.data || error.message);
+          localStorage.removeItem('adminToken');
         }
-      })
-      .then(() => {
-        const redirectUrl = localStorage.getItem('redirectAfterLogin') || '/admin/dashboard';
-        localStorage.removeItem('redirectAfterLogin');
-        navigate(redirectUrl);
-      })
-      .catch(() => {
-        localStorage.removeItem('token');
-      });
+      };
+      verifyToken();
+    } else {
+      console.log('No admin token found, showing login form');
     }
   }, [navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setErrorMessage('');
 
     try {
-      const response = await axios.post(`${base}/api/auth/admin/login`, formData);
+      console.log('Attempting admin login with:', { email: formData.email, url: `${base}/api/auth/admin/login` });
+      
+      // Make direct axios call without interceptors to troubleshoot
+      const response = await axios({
+        method: 'post',
+        url: `${base}/api/auth/admin/login`,
+        data: formData
+      });
+      
+      console.log('Admin login response:', response.data);
+      
+      if (!response.data.token) {
+        throw new Error('No token received from server');
+      }
+      
       const { token } = response.data;
       
       // Store the token
-      localStorage.setItem('token', token);
+      localStorage.setItem('adminToken', token);
+      console.log('Admin token stored in localStorage');
+      
+      // Also set it in axios defaults for immediate use
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       
       // Get the redirect URL or default to admin dashboard
-      const redirectUrl = localStorage.getItem('redirectAfterLogin') || '/admin/dashboard';
-      localStorage.removeItem('redirectAfterLogin');
+      const redirectUrl = localStorage.getItem('redirectUrl') || '/admin/dashboard';
+      localStorage.removeItem('redirectUrl');
       
-      toast.success('Login successful!');
-      navigate(redirectUrl);
+      toast.success('Admin login successful!');
+      console.log('Redirecting to', redirectUrl);
+      
+      try {
+        navigate(redirectUrl);
+      } catch (navError) {
+        console.error('Navigation error:', navError);
+        // Fallback if navigation fails
+        window.location.href = redirectUrl;
+      }
     } catch (error) {
-      console.error('Login error:', error);
-      toast.error(error.response?.data?.message || 'Login failed. Please try again.');
+      const errorMsg = error.response?.data?.message || error.message || 'Login failed. Please try again.';
+      console.error('Login error details:', errorMsg);
+      setErrorMessage(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -83,6 +138,12 @@ const AdminLogin = () => {
 
           {/* Form */}
           <div className="p-6">
+            {errorMessage && (
+              <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg border border-red-200">
+                {errorMessage}
+              </div>
+            )}
+            
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -136,6 +197,31 @@ const AdminLogin = () => {
                   </>
                 )}
               </button>
+              
+              {import.meta.env.DEV && (
+                <div className="text-center mt-4">
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      // For testing only in development
+                      const testToken = "test-admin-token-for-development-only";
+                      localStorage.setItem('adminToken', testToken);
+                      console.log('Set test admin token:', testToken);
+                      toast.success('Test admin login successful!');
+                      navigate('/admin/dashboard');
+                    }}
+                    className="text-xs text-blue-500 underline"
+                  >
+                    Test Login (Dev Only)
+                  </button>
+                </div>
+              )}
+              
+              <div className="text-center mt-4">
+                <p className="text-xs text-gray-500">
+                  Having trouble logging in? Contact the system administrator.
+                </p>
+              </div>
             </form>
           </div>
         </div>
